@@ -1,8 +1,8 @@
-import { Action, AnyAction } from 'redux';
+import { Action } from 'redux';
 import { ThunkAction } from 'redux-thunk';
 import { RootState } from './store';
 
-interface UserEvent {
+export interface UserEvent {
   id: number;
   title: string;
   dateStart: string;
@@ -59,6 +59,14 @@ export const loadUserEvents =
     }
   };
 
+const selectUserEventsState = (rootState: RootState) => rootState.userEvents;
+
+export const selectUserEventsArray = (rootState: RootState) => {
+  const state = selectUserEventsState(rootState);
+
+  return state.allIds.map((id) => state.byIds[id]);
+};
+
 const initialState: UserEventsState = {
   byIds: {},
   allIds: [],
@@ -74,6 +82,10 @@ const userEventsReducer = (
       return {
         ...state,
         allIds: events.map(({ id }) => id),
+        byIds: events.reduce<UserEventsState['byIds']>((byIds, event) => {
+          byIds[event.id] = event;
+          return byIds;
+        }, {}),
       };
     default:
       return state;
