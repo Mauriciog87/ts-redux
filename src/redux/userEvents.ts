@@ -1,5 +1,6 @@
 import { Action } from 'redux';
 import { ThunkAction } from 'redux-thunk';
+import { RecorderState, selectDateStart } from './recorder';
 import { RootState } from './store';
 
 export interface UserEvent {
@@ -59,6 +60,65 @@ export const loadUserEvents =
     }
   };
 
+const CREATE_REQUEST = 'userEvents/create_request';
+
+interface CreateRequestAction extends Action<typeof CREATE_REQUEST> {}
+
+const CREATE_SUCCESS = 'userEvents/create_success';
+
+interface CreateSuccessAction extends Action<typeof CREATE_SUCCESS> {
+  payload: {
+    event: UserEvent;
+  };
+}
+
+const CREATE_FAILURE = 'userEvents/create_failure';
+
+interface CreateFailureAction extends Action<typeof CREATE_FAILURE> {}
+
+export const createUserEvent =
+  (): ThunkAction<
+    Promise<void>,
+    RootState,
+    undefined,
+    CreateRequestAction | CreateSuccessAction | CreateFailureAction
+  > =>
+  async (dispatch) => {
+    dispatch({
+      type: CREATE_REQUEST,
+    });
+
+    try {
+      const dateStart = selectDateStart(getState());
+      const event: Omit<UserEvent, 'id'> = {
+        title: 'No name',
+        dateStart,
+        dateEnd: new Date().toISOString(),
+      };
+
+      const response = await fetch('http://localhost:3001/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(event),
+      });
+
+      const createdEvent: UserEvent = await response.json();
+
+      dispatch({
+        type: CREATE_SUCCESS,
+        payload: {
+          event: createdEvent,
+        },
+      });
+    } catch (error) {
+      dispatch({
+        type: CREATE_FAILURE,
+      });
+    }
+  };
+
 const selectUserEventsState = (rootState: RootState) => rootState.userEvents;
 
 export const selectUserEventsArray = (rootState: RootState) => {
@@ -93,3 +153,9 @@ const userEventsReducer = (
 };
 
 export default userEventsReducer;
+function getState(): import('redux').CombinedState<{
+  userEvents: UserEventsState;
+  recorder: RecorderState;
+}> {
+  throw new Error('Function not implemented.');
+}

@@ -1,7 +1,7 @@
 import { Action } from 'redux';
 import { RootState } from './store';
 
-interface RecorderState {
+export interface RecorderState {
   dateStart: string;
 }
 
